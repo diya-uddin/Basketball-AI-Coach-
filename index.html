@@ -3,253 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Basketball AI Coach</title>
+    <title>AI Hoop Coach</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <!-- Tailwind CSS, Google Fonts, & Chart.js -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        body { font-family: 'Prompt', sans-serif; background-color: #1a1a1a; color: white; overflow-x: hidden; }
+        /* ล็อกหน้าจอไม่ให้ขยับมั่วๆ บน iPad */
+        body { 
+            font-family: 'Prompt', sans-serif; 
+            background-color: #111827; /* สีเทาดำเข้มๆ */
+            color: white; 
+            overflow: hidden; 
+            height: 100vh; /* ล็อกความสูง */
+            height: -webkit-fill-available;
+            display: flex; 
+            flex-direction: column; 
+        }
         
-        /* แอนิเมชันพื้นหลังไล่สีเคลื่อนไหว */
-        .bg-animated {
-            background: linear-gradient(-45deg, #ff7b00, #ff5400, #ff3300, #ff9100);
-            background-size: 400% 400%;
-            animation: gradientBG 5s ease infinite;
-        }
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* เอฟเฟกต์เรืองแสง (Glow) */
-        .glow-text { text-shadow: 0 0 10px rgba(255, 115, 0, 0.8), 0 0 20px rgba(255, 81, 0, 0.6); }
-        .glow-box { box-shadow: 0 0 15px rgba(255, 115, 0, 0.4); }
+        main { flex: 1; position: relative; overflow: hidden; }
         
-        /* แอนิเมชันกระพริบช้าๆ (Breathing) */
-        .breathing { animation: breathe 2s infinite ease-in-out; }
-        @keyframes breathe {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-        }
+        /* จัดการหน้าย่อยให้แยกกันชัดเจน ไม่ซ้อนทับ */
+        .tab-content { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: none; overflow-y: auto; padding: 1rem; }
+        #page-dashboard.active, #page-quests.active { display: block; }
+        #page-chat.active { display: flex; flex-direction: column; padding: 0; } 
+        
+        nav { height: 70px; background-color: #1f2937; border-top: 1px solid #374151; padding-bottom: env(safe-area-inset-bottom); }
 
-        /* การเปลี่ยนหน้า (Tab Transition) */
-        .tab-content { display: none; animation: fadeIn 0.4s ease-out forwards; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* แต่ง Scrollbar แชท */
-        .chat-box::-webkit-scrollbar { width: 4px; }
-        .chat-box::-webkit-scrollbar-thumb { background: #ff7b00; border-radius: 10px; }
+        /* เอฟเฟกต์ตกแต่ง */
+        .glow-text { text-shadow: 0 0 10px rgba(255, 115, 0, 0.8); }
+        .bg-animated { background: linear-gradient(-45deg, #ff7b00, #ea580c, #c2410c); background-size: 200% 200%; animation: gradientBG 4s ease infinite; }
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
     </style>
 </head>
-<body class="flex flex-col h-screen">
+<body>
 
-    <!-- Header (มีไฟวิ่งๆ) -->
-    <header class="bg-animated text-white p-4 text-center font-extrabold text-2xl shadow-lg relative overflow-hidden z-10">
-        <span class="relative z-10 drop-shadow-md">🏀 AI HOOP COACH</span>
-        <div class="absolute inset-0 bg-white opacity-20 breathing"></div>
+    <!-- Header -->
+    <header class="bg-animated text-white p-4 text-center font-extrabold text-xl shadow-lg relative z-10 pt-safe">
+        🏀 AI HOOP COACH
     </header>
 
-    <!-- พื้นที่เนื้อหาหลัก (เว้นที่ให้เมนูด้านล่าง) -->
-    <main class="flex-1 overflow-y-auto pb-20 p-4">
+    <!-- พื้นที่เนื้อหาหลัก -->
+    <main>
         
-        <!-- ================= PAGE 1: DASHBOARD ================= -->
+        <!-- ================= PAGE 1: DASHBOARD (ข้อมูลเริ่มต้นที่ 0) ================= -->
         <div id="page-dashboard" class="tab-content active">
-            <!-- กล่อง OVR Score -->
-            <div class="bg-gray-800 rounded-2xl p-6 text-center glow-box mb-6 border border-orange-500 relative overflow-hidden">
-                <div class="absolute -right-4 -top-4 w-16 h-16 bg-orange-500 rounded-full blur-xl opacity-50 breathing"></div>
-                <h2 class="text-gray-400 text-sm font-semibold tracking-wider">OVERALL RATING</h2>
-                <div class="text-6xl font-extrabold text-orange-500 glow-text my-2">85</div>
-                <p class="text-xs text-orange-300">อัปเดตล่าสุด: วันนี้</p>
+            <div class="bg-gray-800 rounded-2xl p-6 text-center shadow-lg mb-6 border border-gray-700">
+                <h2 class="text-gray-400 text-sm font-semibold">OVERALL RATING</h2>
+                <div class="text-6xl font-extrabold text-gray-500 my-2">0</div>
+                <p class="text-xs text-gray-400">ยังไม่มีข้อมูลการทดสอบ</p>
             </div>
 
-            <!-- กราฟ Radar -->
-            <div class="bg-gray-800 rounded-2xl p-4 glow-box border border-gray-700">
-                <h3 class="text-center font-bold text-gray-300 mb-2">📊 STATS ANALYSIS</h3>
+            <div class="bg-gray-800 rounded-2xl p-4 shadow-lg border border-gray-700 mb-6">
+                <h3 class="text-center font-bold text-gray-400 mb-2">📊 STATS ANALYSIS</h3>
                 <div class="relative w-full h-64">
                     <canvas id="statsChart"></canvas>
                 </div>
             </div>
-
-            <!-- ปุ่มเตือนอัปเดตร่างกาย -->
-            <button class="mt-6 w-full bg-animated text-white font-bold py-3 rounded-xl shadow-lg transform transition active:scale-95 flex justify-center items-center gap-2 breathing">
-                ⚖️ อัปเดตน้ำหนัก / ส่วนสูง ประจำเดือน
+            
+            <button class="w-full bg-gray-700 text-white font-bold py-3 rounded-xl shadow-md opacity-50 cursor-not-allowed">
+                (ระบบบันทึกข้อมูลจะเปิดใช้งานในสเต็ปถัดไป)
             </button>
         </div>
 
-        <!-- ================= PAGE 2: QUESTS & TESTS ================= -->
+        <!-- ================= PAGE 2: QUESTS ================= -->
         <div id="page-quests" class="tab-content">
             <h2 class="text-xl font-bold text-orange-400 mb-4 flex items-center gap-2">
-                📋 <span class="glow-text">ภารกิจประจำสัปดาห์</span>
+                📋 <span>ตารางฝึกซ้อม</span>
             </h2>
             
-            <!-- รายการฝึก (ตัวอย่าง) -->
-            <div class="space-y-4">
-                <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-orange-500 flex justify-between items-center transition transform active:scale-95">
-                    <div>
-                        <h4 class="font-bold text-white">Mikan Drill (เลย์อัพ)</h4>
-                        <p class="text-xs text-gray-400">เป้าหมาย: 30 ครั้ง / 1 นาที</p>
-                    </div>
-                    <button class="bg-gray-700 hover:bg-orange-500 text-white p-2 rounded-lg text-sm font-bold transition">บันทึกผล</button>
-                </div>
-
-                <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-red-500 flex justify-between items-center transition transform active:scale-95">
-                    <div>
-                        <h4 class="font-bold text-white">Squat Jumps</h4>
-                        <p class="text-xs text-gray-400">เป้าหมาย: 40 ครั้ง (เพิ่มพลังกระโดด)</p>
-                    </div>
-                    <button class="bg-gray-700 hover:bg-orange-500 text-white p-2 rounded-lg text-sm font-bold transition">บันทึกผล</button>
-                </div>
-                
-                <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-green-500 flex justify-between items-center transition transform active:scale-95 opacity-50">
-                    <div>
-                        <h4 class="font-bold text-white line-through">ชู้ต Free Throw (50 ลูก)</h4>
-                        <p class="text-xs text-green-400">สำเร็จแล้ว! 🎉</p>
-                    </div>
-                </div>
+            <!-- หน้าว่างเปล่า เพราะยังไม่มีข้อมูล -->
+            <div class="bg-gray-800 p-8 rounded-xl border border-gray-700 text-center flex flex-col items-center justify-center">
+                <span class="text-4xl mb-3 opacity-50">📝</span>
+                <h4 class="font-bold text-gray-300">ยังไม่มีตารางฝึก</h4>
+                <p class="text-sm text-gray-500 mt-2">โค้ช AI จะจัดตารางให้คุณหลังจากบันทึกข้อมูลร่างกายครั้งแรกครับ</p>
             </div>
         </div>
 
-        <!-- ================= PAGE 3: AI CHAT ================= -->
-        <div id="page-chat" class="tab-content flex flex-col h-[calc(100vh-140px)]">
+        <!-- ================= PAGE 3: AI CHAT (ออกแบบใหม่ พิมพ์ง่าย) ================= -->
+        <div id="page-chat" class="tab-content">
             
-            <!-- กล่องแสดงแชท -->
-            <div class="flex-1 bg-gray-800 rounded-t-2xl p-4 overflow-y-auto chat-box border border-gray-700 border-b-0 space-y-4">
-                
-                <!-- ข้อความทักทายจาก AI -->
+            <!-- กล่องข้อความแชท (ส่วนที่เลื่อนได้) -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-box">
+                <!-- ข้อความทักทายแรก -->
                 <div class="flex items-start gap-3">
-                    <div class="w-10 h-10 rounded-full bg-animated flex items-center justify-center text-xl shadow-lg border-2 border-orange-300">👩🏻‍练</div>
-                    <div class="bg-gray-700 text-white p-3 rounded-2xl rounded-tl-none max-w-[80%] text-sm shadow-md">
-                        <div id="coach-message">กำลังโหลดข้อมูลการวิเคราะห์ของคุณ... ⏳</div>
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-400 to-red-500 flex items-center justify-center text-white font-bold shadow-md text-xs border-2 border-white">AI</div>
+                    <div class="bg-gray-700 text-white p-3 rounded-2xl rounded-tl-none max-w-[80%] text-sm shadow-md" id="coach-greeting">
+                        กำลังเตรียมตัว... ⏳
                     </div>
                 </div>
-
-                <!-- ตรงนี้จะไว้ใส่ข้อความแชทไปมาในอนาคต -->
-
             </div>
 
-            <!-- กล่องพิมพ์ข้อความ (Mockup) -->
-            <div class="bg-gray-900 p-3 rounded-b-2xl flex gap-2 border border-gray-700">
-                <input type="text" placeholder="คุยกับโค้ช (เช่น ปวดเข่าขอเปลี่ยนท่า)..." class="flex-1 bg-gray-800 text-white rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
-                <button class="bg-animated text-white w-10 h-10 rounded-full flex justify-center items-center shadow-lg transform transition active:scale-90">
-                    ➤
-                </button>
+            <!-- กล่องพิมพ์ข้อความ (ติดอยู่ด้านล่างเสมอ) -->
+            <div class="bg-gray-800 p-3 border-t border-gray-700">
+                <form id="chat-form" class="flex gap-2">
+                    <input type="text" id="chat-input" placeholder="พิมพ์คุยกับโค้ชตรงนี้..." autocomplete="off" required
+                           class="flex-1 bg-gray-900 text-white border border-gray-600 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-orange-500">
+                    <button type="submit" class="bg-animated text-white w-10 h-10 rounded-full flex justify-center items-center shadow-md transform transition active:scale-90">
+                        ➤
+                    </button>
+                </form>
             </div>
         </div>
 
     </main>
 
     <!-- ================= BOTTOM NAVIGATION ================= -->
-    <nav class="bg-gray-900 fixed bottom-0 w-full border-t border-gray-800 pb-safe">
-        <div class="flex justify-around items-center p-3">
-            <button onclick="changePage('dashboard')" class="nav-btn text-orange-500 flex flex-col items-center transition transform active:scale-90 p-2" id="nav-dashboard">
-                <span class="text-2xl drop-shadow-md">📊</span>
-                <span class="text-[10px] font-bold mt-1">สเตตัส</span>
-            </button>
-            <button onclick="changePage('quests')" class="nav-btn text-gray-500 hover:text-orange-400 flex flex-col items-center transition transform active:scale-90 p-2" id="nav-quests">
-                <span class="text-2xl drop-shadow-md">📋</span>
-                <span class="text-[10px] font-bold mt-1">ตารางฝึก</span>
-            </button>
-            <button onclick="changePage('chat')" class="nav-btn text-gray-500 hover:text-orange-400 flex flex-col items-center transition transform active:scale-90 p-2" id="nav-chat">
-                <span class="text-2xl drop-shadow-md">💬</span>
-                <span class="text-[10px] font-bold mt-1">คุยกับโค้ช</span>
-            </button>
-        </div>
+    <nav class="flex justify-around items-center pt-2">
+        <button onclick="changePage('dashboard')" class="nav-btn text-orange-500 flex flex-col items-center w-1/3" id="nav-dashboard">
+            <span class="text-2xl">📊</span><span class="text-[10px] font-bold mt-1">สเตตัส</span>
+        </button>
+        <button onclick="changePage('quests')" class="nav-btn text-gray-500 flex flex-col items-center w-1/3" id="nav-quests">
+            <span class="text-2xl">📋</span><span class="text-[10px] font-bold mt-1">ตารางฝึก</span>
+        </button>
+        <button onclick="changePage('chat')" class="nav-btn text-gray-500 flex flex-col items-center w-1/3" id="nav-chat">
+            <span class="text-2xl">💬</span><span class="text-[10px] font-bold mt-1">คุยกับโค้ช</span>
+        </button>
     </nav>
 
-    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <!-- ================= JAVASCRIPT ================= -->
     <script>
-        // ⚠️ อย่าลืมใส่ URL ของคุณตรงนี้! ⚠️
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbziMY3WVIf5YRDyMIW9uxhelJds5ozS8eslKQntRY5BP99J1fCaLDhhZL-nEwcLyw_HqA/exec';
+        // ⚠️ เอา URL ของ Web App มาวางตรงนี้
+        const WEB_APP_URL = 'ใส่_URL_WEB_APP_ของคุณตรงนี้';
 
-        // ฟังก์ชันเปลี่ยนหน้า
+        // 1. ระบบเปลี่ยนหน้า (Tab)
         function changePage(pageId) {
-            // ซ่อนทุกหน้า
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            // รีเซ็ตสีเมนูด้านล่าง
-            document.querySelectorAll('.nav-btn').forEach(el => {
-                el.classList.remove('text-orange-500');
-                el.classList.add('text-gray-500');
-            });
+            document.querySelectorAll('.nav-btn').forEach(el => { el.classList.remove('text-orange-500'); el.classList.add('text-gray-500'); });
 
-            // โชว์หน้าที่เลือก
             document.getElementById('page-' + pageId).classList.add('active');
-            // ทำสีส้มที่เมนูที่ถูกเลือก
             document.getElementById('nav-' + pageId).classList.remove('text-gray-500');
             document.getElementById('nav-' + pageId).classList.add('text-orange-500');
-
-            // ถ้ากดเข้าหน้าแชท ให้โหลดข้อความโค้ช (ถ้ายังไม่ได้โหลด)
-            if(pageId === 'chat' && document.getElementById('coach-message').innerHTML.includes('⏳')) {
-                greetCoach();
-            }
         }
 
-        // สร้างกราฟ Radar (Chart.js) แบบเท่ๆ
+        // 2. สร้างกราฟ Radar (ลบข้อมูลออกให้เหลือ 0)
         const ctx = document.getElementById('statsChart').getContext('2d');
-        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(255, 115, 0, 0.5)');
-        gradient.addColorStop(1, 'rgba(255, 115, 0, 0.1)');
-
         new Chart(ctx, {
             type: 'radar',
             data: {
-                labels: ['JMP (กระโดด)', 'STA (อึด)', 'STR (แกร่ง)', 'AGI (คล่อง)', 'SHT (ชู้ต)', 'FIN (เลย์อัพ)', 'DRB (เลี้ยงบอล)'],
+                labels: ['JMP', 'STA', 'STR', 'AGI', 'SHT', 'FIN', 'DRB'],
                 datasets: [{
-                    label: 'Current Stats',
-                    data: [82, 75, 88, 90, 70, 85, 80], // ใส่ตัวเลขสเตตัสจำลองไปก่อน
-                    backgroundColor: gradient,
+                    label: 'Stats',
+                    data: [0, 0, 0, 0, 0, 0, 0], // ค่าเริ่มต้นเป็น 0
+                    backgroundColor: 'rgba(255, 115, 0, 0.2)',
                     borderColor: '#ff7b00',
                     pointBackgroundColor: '#fff',
-                    pointBorderColor: '#ff7b00',
-                    pointHoverBackgroundColor: '#ff7b00',
-                    pointHoverBorderColor: '#fff',
                     borderWidth: 2
                 }]
             },
             options: {
-                scales: {
-                    r: {
-                        angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                        pointLabels: { color: '#fb923c', font: { family: 'Prompt', size: 10 } },
-                        ticks: { display: false, min: 0, max: 99 }
-                    }
-                },
+                scales: { r: { min: 0, max: 99, ticks: { display: false }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, pointLabels: { color: '#9ca3af' } } },
                 plugins: { legend: { display: false } },
                 maintainAspectRatio: false
             }
         });
 
-        // ฟังก์ชันดึงข้อความจาก AI (จากโค้ดเดิมของคุณ)
-        async function greetCoach() {
-            const msgElement = document.getElementById('coach-message');
+        // 3. ระบบแชท AI
+        const chatBox = document.getElementById('chat-box');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+
+        // ฟังก์ชันสร้างกล่องข้อความ
+        function appendMessage(sender, text) {
+            const div = document.createElement('div');
+            div.className = "flex items-start gap-3 " + (sender === 'Me' ? "flex-row-reverse" : "");
+            
+            let avatar = sender === 'Me' 
+                ? `<div class="w-8 h-8 rounded-full bg-gray-500 flex justify-center items-center text-white text-xs">Me</div>`
+                : `<div class="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-400 to-red-500 flex justify-center items-center text-white font-bold shadow-md text-xs border-2 border-white">AI</div>`;
+            
+            let bubbleColor = sender === 'Me' ? 'bg-orange-500 text-white rounded-tr-none' : 'bg-gray-700 text-white rounded-tl-none';
+
+            div.innerHTML = `
+                ${avatar}
+                <div class="${bubbleColor} p-3 rounded-2xl max-w-[80%] text-sm shadow-md">${text}</div>
+            `;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight; // เลื่อนจอลงล่างสุดอัตโนมัติ
+        }
+
+        // ทักทายอัตโนมัติ
+        async function loadGreeting() {
+            try {
+                const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getGreeting' }) });
+                const result = await response.json();
+                document.getElementById('coach-greeting').innerHTML = result.status === 'success' ? result.message : 'เกิดข้อผิดพลาดในการโหลด AI';
+            } catch (e) {
+                document.getElementById('coach-greeting').innerHTML = '❌ เชื่อมต่ออินเทอร์เน็ตไม่ได้';
+            }
+        }
+
+        // ส่งข้อความคุยกับ AI
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+
+            // พิมพ์ข้อความตัวเองขึ้นจอ
+            appendMessage('Me', msg);
+            chatInput.value = '';
+            
+            // โชว์จุดไข่ปลา AI กำลังพิมพ์...
+            const loadingId = "loading-" + Date.now();
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = loadingId;
+            loadingDiv.className = "flex items-start gap-3";
+            loadingDiv.innerHTML = `
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-400 to-red-500 flex justify-center items-center text-white font-bold shadow-md text-xs border-2 border-white">AI</div>
+                <div class="bg-gray-700 text-gray-300 p-3 rounded-2xl rounded-tl-none text-sm shadow-md">กำลังพิมพ์... ✍️</div>
+            `;
+            chatBox.appendChild(loadingDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
             try {
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'getGreeting' })
+                    body: JSON.stringify({ action: 'chat', data: { message: msg } })
                 });
                 const result = await response.json();
-                if(result.status === 'success') {
-                    msgElement.innerHTML = result.message;
+                document.getElementById(loadingId).remove(); // ลบคำว่ากำลังพิมพ์ออก
+                
+                if (result.status === 'success') {
+                    appendMessage('AI', result.message);
                 } else {
-                    msgElement.innerHTML = '❌ ' + result.message;
+                    appendMessage('AI', '❌ ระบบขัดข้องค่ะ');
                 }
             } catch (error) {
-                msgElement.innerHTML = '❌ การเชื่อมต่อขัดข้อง โปรดลองใหม่ค่ะ';
+                document.getElementById(loadingId).remove();
+                appendMessage('AI', '❌ เชื่อมต่อไม่สำเร็จ');
             }
-        }
-        
-        // ให้โค้ชทักทายอัตโนมัติตอนเปิดแอป
-        window.onload = () => { setTimeout(greetCoach, 1000); };
+        });
+
+        // เริ่มโหลดคำทักทายเมื่อเปิดแอป
+        window.onload = () => { loadGreeting(); };
     </script>
 </body>
 </html>
