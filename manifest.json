@@ -1,13 +1,18 @@
 {
-  "name": "My Basketball AI Coach",
-  "short_name": "AI Coach",
+  "name": "AI Hoop Coach",
+  "short_name": "Hoop Coach",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#f97316",
+  "background_color": "#111827",
+  "theme_color": "#ea580c",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/805/805404.png",
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
