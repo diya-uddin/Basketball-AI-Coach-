@@ -6,55 +6,65 @@
     <title>AI Hoop Coach</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
+        <!-- ทำให้รองรับการติดตั้งเป็นแอป PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="theme-color" content="#ea580c">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* ล็อกหน้าจอไม่ให้ขยับมั่วๆ บน iPad */
         body { 
             font-family: 'Prompt', sans-serif; 
-            background-color: #111827; /* สีเทาดำเข้มๆ */
+            background-color: #111827; 
             color: white; 
             overflow: hidden; 
-            height: 100vh; /* ล็อกความสูง */
+            height: 100vh; 
             height: -webkit-fill-available;
             display: flex; 
             flex-direction: column; 
         }
         
         main { flex: 1; position: relative; overflow: hidden; }
-        
-        /* จัดการหน้าย่อยให้แยกกันชัดเจน ไม่ซ้อนทับ */
         .tab-content { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: none; overflow-y: auto; padding: 1rem; }
         #page-dashboard.active, #page-quests.active { display: block; }
         #page-chat.active { display: flex; flex-direction: column; padding: 0; } 
         
-        nav { height: 70px; background-color: #1f2937; border-top: 1px solid #374151; padding-bottom: env(safe-area-inset-bottom); }
+        nav { height: 70px; background-color: #1f2937; border-top: 1px solid #374151; padding-bottom: env(safe-area-inset-bottom); z-index: 50; }
 
-        /* เอฟเฟกต์ตกแต่ง */
         .glow-text { text-shadow: 0 0 10px rgba(255, 115, 0, 0.8); }
-        .bg-animated { background: linear-gradient(-45deg, #ff7b00, #ea580c, #c2410c); background-size: 200% 200%; animation: gradientBG 4s ease infinite; }
-        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        
+        /* อนิเมชั่นคลื่นและโทนสีส้มดุดัน */
+        .bg-wave {
+            background: linear-gradient(120deg, #ea580c, #ff7b00, #c2410c);
+            background-size: 300% 300%;
+            animation: waveAnimation 5s ease-in-out infinite;
+        }
+        @keyframes waveAnimation { 
+            0% { background-position: 0% 50%; } 
+            50% { background-position: 100% 50%; } 
+            100% { background-position: 0% 50%; } 
+        }
+        
+        /* สไตล์สำหรับกล่องเควสต์ */
+        .quest-card { border-left: 4px solid #ea580c; }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
-    <header class="bg-animated text-white p-4 text-center font-extrabold text-xl shadow-lg relative z-10 pt-safe">
+    <header class="bg-wave text-white p-4 text-center font-extrabold text-xl shadow-lg relative z-10 pt-safe">
         🏀 AI HOOP COACH
     </header>
 
-    <!-- พื้นที่เนื้อหาหลัก -->
     <main>
-        
-        <!-- ================= PAGE 1: DASHBOARD (ข้อมูลเริ่มต้นที่ 0) ================= -->
+        <!-- ================= PAGE 1: DASHBOARD ================= -->
         <div id="page-dashboard" class="tab-content active">
-            <div class="bg-gray-800 rounded-2xl p-6 text-center shadow-lg mb-6 border border-gray-700">
-                <h2 class="text-gray-400 text-sm font-semibold">OVERALL RATING</h2>
-                <div class="text-6xl font-extrabold text-gray-500 my-2">0</div>
-                <p class="text-xs text-gray-400">ยังไม่มีข้อมูลการทดสอบ</p>
+            <div class="bg-gray-800 rounded-2xl p-6 text-center shadow-lg mb-6 border border-gray-700 relative overflow-hidden">
+                <h2 class="text-gray-400 text-sm font-semibold tracking-wider">OVERALL RATING</h2>
+                <div id="ovr-display" class="text-6xl font-extrabold text-orange-500 glow-text my-2">--</div>
+                <p class="text-xs text-gray-400">ดึงข้อมูลล่าสุดจากระบบ</p>
             </div>
 
             <div class="bg-gray-800 rounded-2xl p-4 shadow-lg border border-gray-700 mb-6">
@@ -64,51 +74,45 @@
                 </div>
             </div>
             
-            <button class="w-full bg-gray-700 text-white font-bold py-3 rounded-xl shadow-md opacity-50 cursor-not-allowed">
-                (ระบบบันทึกข้อมูลจะเปิดใช้งานในสเต็ปถัดไป)
+            <button class="w-full bg-wave text-white font-bold py-3 rounded-xl shadow-md transform transition active:scale-95">
+                ⚖️ อัปเดตข้อมูลร่างกายประจำเดือน
             </button>
         </div>
 
         <!-- ================= PAGE 2: QUESTS ================= -->
         <div id="page-quests" class="tab-content">
             <h2 class="text-xl font-bold text-orange-400 mb-4 flex items-center gap-2">
-                📋 <span>ตารางฝึกซ้อม</span>
+                📋 <span>ตารางฝึกซ้อมประจำสัปดาห์</span>
             </h2>
             
-            <!-- หน้าว่างเปล่า เพราะยังไม่มีข้อมูล -->
-            <div class="bg-gray-800 p-8 rounded-xl border border-gray-700 text-center flex flex-col items-center justify-center">
-                <span class="text-4xl mb-3 opacity-50">📝</span>
-                <h4 class="font-bold text-gray-300">ยังไม่มีตารางฝึก</h4>
-                <p class="text-sm text-gray-500 mt-2">โค้ช AI จะจัดตารางให้คุณหลังจากบันทึกข้อมูลร่างกายครั้งแรกครับ</p>
+            <!-- จุดที่จะนำรายการเควสต์มาแทรก -->
+            <div id="quests-container" class="space-y-4">
+                <div class="text-center p-8 text-gray-500">กำลังโหลดตารางฝึก... ⏳</div>
             </div>
         </div>
 
-        <!-- ================= PAGE 3: AI CHAT (ออกแบบใหม่ พิมพ์ง่าย) ================= -->
+        <!-- ================= PAGE 3: AI CHAT ================= -->
         <div id="page-chat" class="tab-content">
-            
-            <!-- กล่องข้อความแชท (ส่วนที่เลื่อนได้) -->
             <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-box">
                 <!-- ข้อความทักทายแรก -->
                 <div class="flex items-start gap-3">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-400 to-red-500 flex items-center justify-center text-white font-bold shadow-md text-xs border-2 border-white">AI</div>
-                    <div class="bg-gray-700 text-white p-3 rounded-2xl rounded-tl-none max-w-[80%] text-sm shadow-md" id="coach-greeting">
-                        กำลังเตรียมตัว... ⏳
+                    <div class="w-10 h-10 rounded-full bg-wave flex items-center justify-center text-white font-bold shadow-md text-xs border-2 border-white">AI</div>
+                    <div class="bg-gray-700 text-white p-3 rounded-2xl rounded-tl-none max-w-[80%] text-sm shadow-md">
+                        สวัสดีค่ะ! โค้ชพร้อมแล้ว วันนี้พร้อมลุยหรือยังคะ? พิมพ์คุยกับโค้ชได้เลยนะ 🏀✨
                     </div>
                 </div>
             </div>
 
-            <!-- กล่องพิมพ์ข้อความ (ติดอยู่ด้านล่างเสมอ) -->
-            <div class="bg-gray-800 p-3 border-t border-gray-700">
+            <div class="bg-gray-800 p-3 border-t border-gray-700 pb-safe">
                 <form id="chat-form" class="flex gap-2">
-                    <input type="text" id="chat-input" placeholder="พิมพ์คุยกับโค้ชตรงนี้..." autocomplete="off" required
+                    <input type="text" id="chat-input" placeholder="พิมพ์คุยกับโค้ช..." autocomplete="off" required
                            class="flex-1 bg-gray-900 text-white border border-gray-600 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-orange-500">
-                    <button type="submit" class="bg-animated text-white w-10 h-10 rounded-full flex justify-center items-center shadow-md transform transition active:scale-90">
+                    <button type="submit" class="bg-wave text-white w-10 h-10 rounded-full flex justify-center items-center shadow-md transform transition active:scale-90">
                         ➤
                     </button>
                 </form>
             </div>
         </div>
-
     </main>
 
     <!-- ================= BOTTOM NAVIGATION ================= -->
@@ -126,10 +130,10 @@
 
     <!-- ================= JAVASCRIPT ================= -->
     <script>
-        // ⚠️ เอา URL ของ Web App มาวางตรงนี้
-        const WEB_APP_URL = 'ใส่_URL_WEB_APP_ของคุณตรงนี้';
+        // ⚠️ นำ Web App URL ของคุณมาใส่ตรงนี้ ⚠️
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbziMY3WVIf5YRDyMIW9uxhelJds5ozS8eslKQntRY5BP99J1fCaLDhhZL-nEwcLyw_HqA/exec';
 
-        // 1. ระบบเปลี่ยนหน้า (Tab)
+        // ระบบเปลี่ยนหน้า Tab
         function changePage(pageId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => { el.classList.remove('text-orange-500'); el.classList.add('text-gray-500'); });
@@ -139,15 +143,14 @@
             document.getElementById('nav-' + pageId).classList.add('text-orange-500');
         }
 
-        // 2. สร้างกราฟ Radar (ลบข้อมูลออกให้เหลือ 0)
-        const ctx = document.getElementById('statsChart').getContext('2d');
-        new Chart(ctx, {
+        // ตั้งค่ากราฟเริ่มต้น (ค่าเริ่มต้นคือ 0)
+        let statsChart = new Chart(document.getElementById('statsChart').getContext('2d'), {
             type: 'radar',
             data: {
                 labels: ['JMP', 'STA', 'STR', 'AGI', 'SHT', 'FIN', 'DRB'],
                 datasets: [{
                     label: 'Stats',
-                    data: [0, 0, 0, 0, 0, 0, 0], // ค่าเริ่มต้นเป็น 0
+                    data: [0, 0, 0, 0, 0, 0, 0], 
                     backgroundColor: 'rgba(255, 115, 0, 0.2)',
                     borderColor: '#ff7b00',
                     pointBackgroundColor: '#fff',
@@ -156,64 +159,99 @@
             },
             options: {
                 scales: { r: { min: 0, max: 99, ticks: { display: false }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, pointLabels: { color: '#9ca3af' } } },
-                plugins: { legend: { display: false } },
-                maintainAspectRatio: false
+                plugins: { legend: { display: false } }, maintainAspectRatio: false
             }
         });
 
-        // 3. ระบบแชท AI
-        const chatBox = document.getElementById('chat-box');
-        const chatForm = document.getElementById('chat-form');
-        const chatInput = document.getElementById('chat-input');
+        // ================= ฟังก์ชันเชื่อมต่อ Google Sheets =================
 
-        // ฟังก์ชันสร้างกล่องข้อความ
-        function appendMessage(sender, text) {
-            const div = document.createElement('div');
-            div.className = "flex items-start gap-3 " + (sender === 'Me' ? "flex-row-reverse" : "");
-            
-            let avatar = sender === 'Me' 
-                ? `<div class="w-8 h-8 rounded-full bg-gray-500 flex justify-center items-center text-white text-xs">Me</div>`
-                : `<div class="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-400 to-red-500 flex justify-center items-center text-white font-bold shadow-md text-xs border-2 border-white">AI</div>`;
-            
-            let bubbleColor = sender === 'Me' ? 'bg-orange-500 text-white rounded-tr-none' : 'bg-gray-700 text-white rounded-tl-none';
-
-            div.innerHTML = `
-                ${avatar}
-                <div class="${bubbleColor} p-3 rounded-2xl max-w-[80%] text-sm shadow-md">${text}</div>
-            `;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight; // เลื่อนจอลงล่างสุดอัตโนมัติ
-        }
-
-        // ทักทายอัตโนมัติ
-        async function loadGreeting() {
+        // 1. โหลดข้อมูลสเตตัสมาแสดงที่ Dashboard
+        async function loadDashboard() {
             try {
-                const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getGreeting' }) });
+                const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getDashboard' }) });
                 const result = await response.json();
-                document.getElementById('coach-greeting').innerHTML = result.status === 'success' ? result.message : 'เกิดข้อผิดพลาดในการโหลด AI';
-            } catch (e) {
-                document.getElementById('coach-greeting').innerHTML = '❌ เชื่อมต่ออินเทอร์เน็ตไม่ได้';
+                
+                if (result.status === 'success') {
+                    const data = result.data;
+                    document.getElementById('ovr-display').innerText = data.OVR || 0;
+                    statsChart.data.datasets[0].data = [data.JMP, data.STA, data.STR, data.AGI, data.SHT, data.FIN, data.DRB];
+                    statsChart.update();
+                }
+            } catch (error) {
+                console.error("โหลดข้อมูล Dashboard ไม่สำเร็จ");
             }
         }
 
-        // ส่งข้อความคุยกับ AI
+        // 2. โหลดรายการเควสต์มาแสดงที่หน้า ตารางฝึก
+        async function loadQuests() {
+            try {
+                const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getQuests' }) });
+                const result = await response.json();
+                
+                const container = document.getElementById('quests-container');
+                container.innerHTML = ''; // ล้างข้อความกำลังโหลด
+
+                if (result.status === 'success' && result.data.length > 0) {
+                    result.data.forEach(quest => {
+                        const questHTML = `
+                            <div class="bg-gray-800 p-4 rounded-xl quest-card flex justify-between items-center transition transform active:scale-95">
+                                <div>
+                                    <span class="text-[10px] text-orange-400 font-bold tracking-wider uppercase">${quest.category}</span>
+                                    <h4 class="font-bold text-white text-md">${quest.name}</h4>
+                                    <p class="text-xs text-gray-400 mt-1">${quest.detail}</p>
+                                </div>
+                                <button class="bg-gray-700 hover:bg-orange-500 text-white p-2 px-3 rounded-lg text-xs font-bold transition whitespace-nowrap ml-2">บันทึก</button>
+                            </div>
+                        `;
+                        container.innerHTML += questHTML;
+                    });
+                } else {
+                    container.innerHTML = `
+                        <div class="bg-gray-800 p-8 rounded-xl border border-gray-700 text-center">
+                            <span class="text-4xl mb-3 opacity-50 block">📝</span>
+                            <h4 class="font-bold text-gray-300">ตารางว่างเปล่า</h4>
+                            <p class="text-sm text-gray-500 mt-2">ยังไม่มีการฝึกซ้อมที่รออยู่ครับ</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('quests-container').innerHTML = '<div class="text-center text-red-500 p-4">❌ โหลดข้อมูลไม่สำเร็จ</div>';
+            }
+        }
+
+        // 3. ระบบส่งแชท
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatBox = document.getElementById('chat-box');
+
+        function appendMessage(sender, text) {
+            const div = document.createElement('div');
+            div.className = "flex items-start gap-3 " + (sender === 'Me' ? "flex-row-reverse" : "");
+            let avatar = sender === 'Me' 
+                ? `<div class="w-8 h-8 rounded-full bg-gray-500 flex justify-center items-center text-white text-xs">Me</div>`
+                : `<div class="w-10 h-10 rounded-full bg-wave flex justify-center items-center text-white font-bold shadow-md text-xs border-2 border-white">AI</div>`;
+            let bubbleColor = sender === 'Me' ? 'bg-orange-500 text-white rounded-tr-none' : 'bg-gray-700 text-white rounded-tl-none';
+
+            div.innerHTML = `${avatar}<div class="${bubbleColor} p-3 rounded-2xl max-w-[80%] text-sm shadow-md">${text}</div>`;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const msg = chatInput.value.trim();
             if (!msg) return;
 
-            // พิมพ์ข้อความตัวเองขึ้นจอ
             appendMessage('Me', msg);
             chatInput.value = '';
             
-            // โชว์จุดไข่ปลา AI กำลังพิมพ์...
             const loadingId = "loading-" + Date.now();
             const loadingDiv = document.createElement('div');
             loadingDiv.id = loadingId;
             loadingDiv.className = "flex items-start gap-3";
             loadingDiv.innerHTML = `
-                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-400 to-red-500 flex justify-center items-center text-white font-bold shadow-md text-xs border-2 border-white">AI</div>
-                <div class="bg-gray-700 text-gray-300 p-3 rounded-2xl rounded-tl-none text-sm shadow-md">กำลังพิมพ์... ✍️</div>
+                <div class="w-10 h-10 rounded-full bg-wave flex justify-center items-center text-white font-bold shadow-md text-xs border-2 border-white">AI</div>
+                <div class="bg-gray-700 text-gray-400 p-3 rounded-2xl rounded-tl-none text-sm shadow-md">กำลังพิมพ์... ✍️</div>
             `;
             chatBox.appendChild(loadingDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
@@ -224,12 +262,12 @@
                     body: JSON.stringify({ action: 'chat', data: { message: msg } })
                 });
                 const result = await response.json();
-                document.getElementById(loadingId).remove(); // ลบคำว่ากำลังพิมพ์ออก
+                document.getElementById(loadingId).remove(); 
                 
                 if (result.status === 'success') {
                     appendMessage('AI', result.message);
                 } else {
-                    appendMessage('AI', '❌ ระบบขัดข้องค่ะ');
+                    appendMessage('AI', '❌ ระบบขัดข้อง: ' + result.message);
                 }
             } catch (error) {
                 document.getElementById(loadingId).remove();
@@ -237,8 +275,11 @@
             }
         });
 
-        // เริ่มโหลดคำทักทายเมื่อเปิดแอป
-        window.onload = () => { loadGreeting(); };
+        // ดึงข้อมูลเมื่อเปิดแอป
+        window.onload = () => {
+            loadDashboard();
+            loadQuests();
+        };
     </script>
 </body>
 </html>
